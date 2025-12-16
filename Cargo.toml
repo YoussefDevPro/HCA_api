@@ -2,6 +2,11 @@
 name = "hackclub_auth_api"
 version = "0.0.1"
 edition = "2024"
+repository = "https://github.com/YoussefDevPro/HCA_api"
+keywords = ["hackclub", "hc", "hca", "hackclub auth"]
+categories = ["development-tools"]
+description = "a crate to interact with hackclubs oauth api, its unoficial :p"
+license = "MIT"
 
 [dependencies]
 jsonwebtoken = {version="10.2.0",features=["rust_crypto"]}
