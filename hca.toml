@@ -1,3 +1,3 @@
-client_id = "eb3507bb1893f98b5d9d2d11a0114da5"
-client_secrets = "ae1a8de86ada5203787a66fdb548fd4005b5f5afdd8b79c3fe22aeb4d67e3707"
+client_id = ""
+client_secrets = ""
 redirect_uri = "http://localhost:8080/oauth/callback"
