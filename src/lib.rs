@@ -1,8 +1,4 @@
-use jsonwebtoken::Algorithm;
-use jsonwebtoken::DecodingKey;
-use jsonwebtoken::Validation;
-use jsonwebtoken::decode;
-use jsonwebtoken::decode_header;
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
 
@@ -83,15 +79,15 @@ pub struct Identity {
 ///
 /// Are they verified, pending, naughty, or just invisible in the woods?
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum VerificationStatus {
-    Needs_submission,
+    NeedsSubmission,
     Pending,
     Ineligible,
     Verified,
     Rejected,
-    Not_found,
-    Verified_but_over_18,
+    NotFound,
+    VerifiedButOver18,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
