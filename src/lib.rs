@@ -175,7 +175,7 @@ impl HCAuth {
     pub async fn exchange_code(&self, code: String) -> Result<Token, reqwest::Error> {
         let client = reqwest::Client::new();
         let token = client
-            .post(encode("https://auth.hackclub.com/oauth/token").to_string())
+            .post("https://auth.hackclub.com/oauth/token")
             .form(&[
                 ("client_id", self.client_id.clone()),
                 ("client_secret", self.client_secrets.clone()),
@@ -233,7 +233,7 @@ impl HCAuth {
         id: String,
     ) -> Result<UserIdentity, reqwest::Error> {
         let api_resp = reqwest::Client::new()
-            .get(encode(format!("{}/api/identities/{}", URL_BASE, id).as_str()).to_string())
+            .get(format!("{}/api/identities/{}", URL_BASE, id))
             .bearer_auth(token)
             .send()
             .await?
@@ -249,7 +249,7 @@ impl HCAuth {
         token: String,
     ) -> Result<Vec<UserIdentity>, reqwest::Error> {
         let api_resp = reqwest::Client::new()
-            .get(encode(format!("{}/api/identities/", URL_BASE).as_str()).to_string())
+            .get(format!("{}/api/identities/", URL_BASE))
             .bearer_auth(token)
             .send()
             .await?
@@ -275,7 +275,7 @@ impl HCAuth {
         };
 
         let status = reqwest::Client::new()
-            .get(encode(format!("{}/api/external/check", URL_BASE).as_str()).to_string())
+            .get(format!("{}/api/external/check", URL_BASE))
             .query(&params)
             .send()
             .await?
@@ -293,7 +293,7 @@ impl HCAuth {
     ) -> Result<IdClaims, Box<dyn std::error::Error>> {
         let id_token = id_token.ok_or("missing id_token")?;
         let jwks = reqwest::Client::new()
-            .get(encode(format!("{}/oauth/discovery/keys", URL_BASE).as_str()).to_string())
+            .get(format!("{}/oauth/discovery/keys", URL_BASE))
             .send()
             .await?
             .error_for_status()?
