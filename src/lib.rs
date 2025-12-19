@@ -215,7 +215,7 @@ impl HCAuth {
     ///  Fetch the user's identity info from Hack Club API.
     pub async fn get_identity(&self, token: String) -> Result<ApiResponse, reqwest::Error> {
         let api_resp = reqwest::Client::new()
-            .get(encode(format!("{}/api/v1/me", URL_BASE).as_str()).to_string())
+            .get(format!("{}/api/v1/me", URL_BASE))
             .bearer_auth(token)
             .send()
             .await?
