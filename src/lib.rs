@@ -1,4 +1,4 @@
-use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
 
@@ -192,33 +192,25 @@ impl HCAuth {
     }
 
     /// Generate an OAuth URL for login with specific scopes.
-    pub fn get_oauth_uri(&self, scopes: &[String]) -> String {
-        encode(
-            format!(
-                "{}/oauth/authorize?client_id={}&redirect_uri={}&response_type=code&scope={}",
-                URL_BASE,
-                self.client_id,
-                self.redirect_uri,
-                scopes.join("+")
-            )
-            .as_str(),
+    pub fn get_oauth_uri(&self, scopes: &[&str]) -> String {
+        format!(
+            "{}/oauth/authorize?client_id={}&redirect_uri={}&response_type=code&scope={}",
+            URL_BASE,
+            self.client_id,
+            self.redirect_uri,
+            scopes.join("+")
         )
-        .to_string()
     }
 
     /// Generate a re-auth URL to force the user to log in again.
     pub fn get_reauth_uri(&self, max_age: Option<u32>) -> String {
-        encode(
-            format!(
-                "{}/oauth/authorize?client_id={}&prompt=login&redirect_uri={}&max_age={}",
-                URL_BASE,
-                self.client_id,
-                self.redirect_uri,
-                max_age.unwrap_or(0)
-            )
-            .as_str(),
+        format!(
+            "{}/oauth/authorize?client_id={}&prompt=login&redirect_uri={}&max_age={}",
+            URL_BASE,
+            self.client_id,
+            self.redirect_uri,
+            max_age.unwrap_or(0)
         )
-        .to_string()
     }
     ///  Fetch the user's identity info from Hack Club API.
     pub async fn get_identity(&self, token: String) -> Result<ApiResponse, reqwest::Error> {
