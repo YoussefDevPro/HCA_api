@@ -1,4 +1,4 @@
-use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
 
@@ -164,7 +164,7 @@ impl Default for HCAuth {
 impl HCAuth {
     /// Creat New HCAuth by sniffing the config file :3
     pub fn new() -> Self {
-        let config_str = std::fs::read_to_string("../hca.toml").unwrap();
+        let config_str = std::fs::read_to_string("hca.toml").unwrap();
         let config: HCAuth = toml::from_str(config_str.as_str()).unwrap();
         config
     }
