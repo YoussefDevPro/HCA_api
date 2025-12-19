@@ -1,6 +1,5 @@
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
-use urlencoding::encode;
 
 /// HCAuth holds your Hack Club OAuth credentials.
 ///
