@@ -56,7 +56,7 @@ pub struct IdClaims {
     pub email_verified: Option<bool>,
 
     /// Hack Club-specific
-    pub verification_status: Option<String>,
+    pub verification_status: Option<VerificationStatus>,
     pub ysws_eligible: Option<bool>,
 
     /// Optional address scope (OIDC standard)
