@@ -1,3 +1,5 @@
+use chrono::Utc;
+use jsonwebtoken::TokenData;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::{Deserialize, Serialize};
 
@@ -41,6 +43,33 @@ pub struct IdClaims {
     pub aud: String,
     /// Expiry timestamp (when the treat goes stale)
     pub exp: usize,
+    /// Issued at timestamp
+    pub iat: usize,
+
+    /// Profile info
+    pub name: Option<String>,
+    pub given_name: Option<String>,
+    pub family_name: Option<String>,
+
+    /// Email info
+    pub email: Option<String>,
+    pub email_verified: Option<bool>,
+
+    /// Hack Club-specific
+    pub verification_status: Option<String>,
+    pub ysws_eligible: Option<bool>,
+
+    /// Optional address scope (OIDC standard)
+    pub address: Option<AddressClaim>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddressClaim {
+    pub street_address: Option<String>,
+    pub locality: Option<String>,
+    pub region: Option<String>,
+    pub postal_code: Option<String>,
+    pub country: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -115,14 +144,17 @@ struct UserInfo {
     pub nickname: Option<String>,
     pub updated_at: Option<String>,
     pub slack_id: Option<String>,
-    pub verification_status: Option<String>,
+    pub verification_status: Option<VerificationStatus>,
     pub ysws_eligible: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
     pub access_token: Option<String>,
+    pub expires_in: Option<u32>,
     pub id_token: Option<String>,
+    pub refresh_token: Option<String>,
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -181,6 +213,24 @@ impl HCAuth {
                 ("code", code),
                 ("redirect_uri", self.redirect_uri.clone()),
                 ("grant_type", "authorization_code".to_string()),
+            ])
+            .send()
+            .await?
+            .error_for_status()?
+            .json::<Token>()
+            .await?;
+        Ok(token)
+    }
+
+    pub async fn refresh_token(&self, refresh_token: String) -> Result<Token, reqwest::Error> {
+        let client = reqwest::Client::new();
+        let token = client
+            .post("https://auth.hackclub.com/oauth/token")
+            .form(&[
+                ("client_id", self.client_id.clone()),
+                ("client_secret", self.client_secrets.clone()),
+                ("refresh_token", refresh_token),
+                ("grant_type", "refresh_token".to_string()),
             ])
             .send()
             .await?
@@ -291,12 +341,12 @@ impl HCAuth {
         id_token: Option<String>,
     ) -> Result<IdClaims, Box<dyn std::error::Error>> {
         let id_token = id_token.ok_or("missing id_token")?;
-        let jwks = reqwest::Client::new()
+        let jwks: Jwks = reqwest::Client::new()
             .get(format!("{}/oauth/discovery/keys", URL_BASE))
             .send()
             .await?
             .error_for_status()?
-            .json::<Jwks>()
+            .json()
             .await?;
         let header = decode_header(&id_token)?;
         let kid = header.kid.ok_or("missing kid in token")?;
@@ -305,13 +355,26 @@ impl HCAuth {
             .iter()
             .find(|k| k.kid.as_deref() == Some(&kid))
             .ok_or("no matching JWK")?;
+
         let n = jwk.n.as_ref().ok_or("JWK missing n")?;
         let e = jwk.e.as_ref().ok_or("JWK missing e")?;
         let decoding_key = DecodingKey::from_rsa_components(n, e)?;
         let mut validation = Validation::new(Algorithm::RS256);
-        validation.set_issuer(&[URL_BASE]);
         validation.set_audience(std::slice::from_ref(&self.client_id));
-        let token = decode::<IdClaims>(&id_token, &decoding_key, &validation)?;
-        Ok(token.claims)
+        validation.set_issuer(&[URL_BASE]);
+        let token_data: TokenData<IdClaims> =
+            decode::<IdClaims>(&id_token, &decoding_key, &validation)?;
+        let claims = token_data.claims;
+        let now = Utc::now().timestamp() as usize;
+        if claims.aud != self.client_id {
+            return Err("invalid audience".into());
+        }
+        if claims.iss != URL_BASE {
+            return Err("invalid issuer".into());
+        }
+        if claims.exp < now {
+            return Err("token expired".into());
+        }
+        Ok(claims)
     }
 }
